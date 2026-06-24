@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictor de Colegiatura Universitaria</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #1a365d;
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #4a5568;
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .instrucciones {
+            background: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+            color: #2b6cb0;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+        .hint {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-bottom: 6px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #2d3748;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        button:hover { background: #1a365d; }
+        .resultado {
+            margin-top: 24px;
+            padding: 20px;
+            background: #f0fff4;
+            border: 2px solid #38a169;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .resultado h2 {
+            color: #276749;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        .resultado .valor {
+            color: #22543d;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .resultado .unidad {
+            color: #4a5568;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+        .error {
+            margin-top: 20px;
+            padding: 16px;
+            background: #fff5f5;
+            border: 2px solid #fc8181;
+            border-radius: 8px;
+            color: #c53030;
+            font-weight: 500;
+        }
+        .modelo-info {
+            margin-top: 24px;
+            font-size: 0.8rem;
+            color: #a0aec0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Predictor de Colegiatura Universitaria</h1>
+        <p class="subtitle">
+            Estima el costo anual de colegiatura para estudiantes foráneos (Outstate) 
+            en universidades de Estados Unidos, basado en características institucionales.
+        </p>
+
+        <div class="instrucciones">
+            📋 <strong>Instrucciones:</strong> Ingresa las características de la universidad 
+            que deseas consultar y presiona "Predecir Colegiatura" para obtener una estimación 
+            del costo anual en dólares (USD).
+        </div>
+
+        <form method="POST">
+            <div class="form-group">
+                <label>Tipo de Universidad</label>
+                <p class="hint">Indica si la universidad es privada o pública</p>
+                <select name="private" required>
+                    <option value="">-- Selecciona --</option>
+                    <option value="Yes" {% if request.form.get('private') == 'Yes' %}selected{% endif %}>Privada</option>
+                    <option value="No" {% if request.form.get('private') == 'No' %}selected{% endif %}>Pública</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Costo de Habitación y Alimentación (Room.Board)</label>
+                <p class="hint">Costo anual estimado en dólares USD (ej: 4,500)</p>
+                <input type="number" name="room_board" min="0" max="20000" step="1"
+                       placeholder="Ej: 4500"
+                       value="{{ request.form.get('room_board', '') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Tasa de Graduación (Grad.Rate)</label>
+                <p class="hint">Porcentaje de estudiantes que se gradúan (0 a 100)</p>
+                <input type="number" name="grad_rate" min="0" max="100" step="1"
+                       placeholder="Ej: 75"
+                       value="{{ request.form.get('grad_rate', '') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Gasto Institucional por Estudiante (Expend)</label>
+                <p class="hint">Gasto anual de la universidad por estudiante en USD (ej: 8,000)</p>
+                <input type="number" name="expend" min="0" max="100000" step="1"
+                       placeholder="Ej: 8000"
+                       value="{{ request.form.get('expend', '') }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Porcentaje de Exalumnos Donantes (perc.alumni)</label>
+                <p class="hint">Porcentaje de exalumnos que donan a la universidad (0 a 100)</p>
+                <input type="number" name="perc_alumni" min="0" max="100" step="1"
+                       placeholder="Ej: 25"
+                       value="{{ request.form.get('perc_alumni', '') }}" required>
+            </div>
+
+            <button type="submit">🔮 Predecir Colegiatura</button>
+        </form>
+
+        {% if prediction %}
+        <div class="resultado">
+            <h2>Colegiatura estimada para estudiantes foráneos</h2>
+            <div class="valor">{{ prediction }}</div>
+            <div class="unidad">anuales (USD) — estudiantes fuera del estado</div>
+        </div>
+        {% endif %}
+
+        {% if error %}
+        <div class="error">
+            ⚠️ {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="modelo-info">
+            Modelo: Random Forest Regressor | R²=0.8034 | MAE=$1,390<br>
+            Dataset: College — U.S. News and World Report
+        </div>
+    </div>
+</body>
+</html>
